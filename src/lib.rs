@@ -6,7 +6,7 @@
 //!
 //! ## With a buffer
 //! ```rust
-//! use leb127rs::{leb128_write_u64, leb128_read_u64};
+//! use leb128rs::{leb128_write_u64, leb128_read_u64};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let myu64 = 20260107;
@@ -29,8 +29,8 @@
 //! ## With a file
 //! ```rust
 //! use std::fs::File;
-//! use std::io::{Seek, SeekFrom};
-//! use leb127rs::{leb128_write_u64, leb128_read_u64};
+//! use std::io::{Read, BufReader, BufWriter};
+//! use leb128rs::{leb128_write_u64, leb128_read_u64};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let myu64 = 20260107;
@@ -210,7 +210,7 @@ pub mod short {
     //!
     //! Example:
     //! ```rust
-    //! use leb127rs::short::{write_u64, read_u64};
+    //! use leb128rs::short::{write_u64, read_u64};
     //!
     //! fn main() -> Result<(), Box<dyn std::error::Error>> {
     //!     let myu64 = 20260107;
@@ -240,6 +240,18 @@ pub mod short {
     pub use super::leb128_read_u64 as read_u64;
     pub use super::leb128_read_u128 as read_u128;
     pub use super::leb128_read_usize as read_usize;
+
+    pub use super::leb128_write_i16 as write_i16;
+    pub use super::leb128_write_i32 as write_i32;
+    pub use super::leb128_write_i64 as write_i64;
+    pub use super::leb128_write_i128 as write_i128;
+    pub use super::leb128_write_isize as write_isize;
+
+    pub use super::leb128_write_u16 as write_u16;
+    pub use super::leb128_write_u32 as write_u32;
+    pub use super::leb128_write_u64 as write_u64;
+    pub use super::leb128_write_u128 as write_u128;
+    pub use super::leb128_write_usize as write_usize;
 }
 
 #[cfg(test)]
@@ -538,53 +550,60 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn u32_step_137() -> Result<(), std::io::Error> {
-        let step = 137;
-        u32_step(step)
-    }
+    macro_rules! make_step_test {
+        ($fname:ident, $tp:ty, $step:expr, $rf:ident, $wf:ident) => {
+            #[test]
+            fn $fname() -> Result<(), std::io::Error> {
+                let step = $step;
+                let mut val = <$tp>::MIN;
+                let max = <$tp>::MAX - step;
+                loop {
+                    let mut buf: Vec<u8> = vec![];
+                    $wf(&val, &mut buf)?;
+                    let read_val = $rf(&mut buf.as_slice())?;
+                    assert_eq!(val, read_val);
 
-    fn u32_step(step: u32) -> Result<(), std::io::Error> {
-        let mut val = 0u32;
-        let max = u32::MAX - step;
-        loop {
-            let mut buf: Vec<u8> = vec![];
-            leb128_write_u32(&val, &mut buf)?;
-            let read_val = leb128_read_u32(&mut buf.as_slice())?;
-            assert_eq!(val, read_val);
+                    if val > max {
+                        break;
+                    }
 
-            if val > max {
-                break;
+                    // never wraps, slightly faster
+                    val = val.wrapping_add(step);
+                }
+                Ok(())
             }
-
-            // never wraps, slightly faster
-            val = val.wrapping_add(step);
-        }
-        Ok(())
+        };
     }
 
-    #[test]
-    fn u64_step_702942986507() -> Result<(), std::io::Error> {
-        let step = 702942986507;
-        u64_step(step)
-    }
+    make_step_test!(u32_step_137, u32, 137u32, leb128_read_u32, leb128_write_u32);
+    make_step_test!(
+        u64_step_702942986507,
+        u64,
+        702942986507u64,
+        leb128_read_u64,
+        leb128_write_u64
+    );
+    make_step_test!(
+        u128_step_1298074214633706907131921139318517,
+        u128,
+        1298074214633706907131921139318517u128,
+        leb128_read_u128,
+        leb128_write_u128
+    );
 
-    fn u64_step(step: u64) -> Result<(), std::io::Error> {
-        let mut val = 0u64;
-        let max = u64::MAX - step;
-        loop {
-            let mut buf: Vec<u8> = vec![];
-            leb128_write_u64(&val, &mut buf)?;
-            let read_val = leb128_read_u64(&mut buf.as_slice())?;
-            assert_eq!(val, read_val);
-
-            if val > max {
-                break;
-            }
-
-            // never wraps, slightly faster
-            val = val.wrapping_add(step);
-        }
-        Ok(())
-    }
+    make_step_test!(i32_step_137, i32, 137i32, leb128_read_i32, leb128_write_i32);
+    make_step_test!(
+        i64_step_702942986507,
+        i64,
+        702942986507i64,
+        leb128_read_i64,
+        leb128_write_i64
+    );
+    make_step_test!(
+        i128_step_1298074214633706907131921139318517,
+        i128,
+        1298074214633706907131921139318517i128,
+        leb128_read_i128,
+        leb128_write_i128
+    );
 }
