@@ -606,4 +606,87 @@ mod test {
         leb128_read_i128,
         leb128_write_i128
     );
+
+    struct CountingReader<'a, R: std::io::Read> {
+        inner: &'a mut R,
+        pub bytes_read: usize,
+    }
+
+    impl<'a, R: std::io::Read> std::io::Read for CountingReader<'a, R> {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            let n = self.inner.read(buf)?;
+            self.bytes_read += n;
+            Ok(n)
+        }
+    }
+
+    macro_rules! make_test_read_from_invalid {
+        ($fname:ident, $tp:ty, $rf:ident, $pattern:literal, $expected:expr) => {
+            #[test]
+            fn $fname() -> Result<(), std::io::Error> {
+                const MAX_BYTES: usize = leb128_max_bytes(std::mem::size_of::<$tp>());
+                let mut buf: &[u8] = &[$pattern; MAX_BYTES + 1];
+                let mut counting_reader = CountingReader {
+                    inner: &mut buf,
+                    bytes_read: 0,
+                };
+                let read_val = $rf(&mut counting_reader)?;
+                assert_eq!(read_val, $expected);
+                assert_eq!(counting_reader.bytes_read, MAX_BYTES);
+                Ok(())
+            }
+        };
+    }
+
+    make_test_read_from_invalid!(u16_from_invalid_0x80, u16, leb128_read_u16, 0x80, 0u16);
+    make_test_read_from_invalid!(u32_from_invalid_0x80, u32, leb128_read_u32, 0x80, 0u32);
+    make_test_read_from_invalid!(u64_from_invalid_0x80, u64, leb128_read_u64, 0x80, 0u64);
+    make_test_read_from_invalid!(u128_from_invalid_0x80, u128, leb128_read_u128, 0x80, 0u128);
+    make_test_read_from_invalid!(
+        usize_from_invalid_0x80,
+        usize,
+        leb128_read_usize,
+        0x80,
+        0usize
+    );
+
+    make_test_read_from_invalid!(i16_from_invalid_0x80, i16, leb128_read_i16, 0x80, 0i16);
+    make_test_read_from_invalid!(i32_from_invalid_0x80, i32, leb128_read_i32, 0x80, 0i32);
+    make_test_read_from_invalid!(i64_from_invalid_0x80, i64, leb128_read_i64, 0x80, 0i64);
+    make_test_read_from_invalid!(i128_from_invalid_0x80, i128, leb128_read_i128, 0x80, 0i128);
+    make_test_read_from_invalid!(
+        isize_from_invalid_0x80,
+        isize,
+        leb128_read_isize,
+        0x80,
+        0isize
+    );
+
+    make_test_read_from_invalid!(u16_from_invalid_0xff, u16, leb128_read_u16, 0xFF, 0xFFFFu16);
+    make_test_read_from_invalid!(
+        u32_from_invalid_0xff,
+        u32,
+        leb128_read_u32,
+        0xFF,
+        0xFFFFFFFFu32
+    );
+    make_test_read_from_invalid!(
+        u64_from_invalid_0xff,
+        u64,
+        leb128_read_u64,
+        0xFF,
+        0xFFFFFFFFFFFFFFFFu64
+    );
+    make_test_read_from_invalid!(
+        u128_from_invalid_0xff,
+        u128,
+        leb128_read_u128,
+        0xFF,
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFu128
+    );
+
+    make_test_read_from_invalid!(i16_from_invalid_0xff, i16, leb128_read_i16, 0xFF, -1i16);
+    make_test_read_from_invalid!(i32_from_invalid_0xff, i32, leb128_read_i32, 0xFF, -1i32);
+    make_test_read_from_invalid!(i64_from_invalid_0xff, i64, leb128_read_i64, 0xFF, -1i64);
+    make_test_read_from_invalid!(i128_from_invalid_0xff, i128, leb128_read_i128, 0xFF, -1i128);
 }

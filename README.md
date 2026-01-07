@@ -1,5 +1,5 @@
 # leb128rs
-This crate provides leb128 serialization and deserialization routines for the following types:
+This crate provides LEB128 serialization and deserialization routines for the following types:
 - Unsigned:
   - `u16`
   - `u32`
@@ -13,7 +13,7 @@ This crate provides leb128 serialization and deserialization routines for the fo
   - `i128`
   - `isize`
 
-There are no functions for `u8` and `i8` as actual LEB128 encoding would, on average, make such types larger. If there is a need to encode them, let me know.
+There are no functions for `u8` and `i8` as actual LEB128 encoding would never save space. If there is a need to encode these types, let me know.
 
 The deserialization functions
 - refuse to read more bytes than could be serialized for a type but
@@ -48,4 +48,7 @@ The default unit tests also test the full range of
 - `u16`,
 - `i16`,
 
-as well as patterns for all types and steps of regular intervals for types with more than 16 bits.
+as well as
+- patterns for all types and
+- steps of regular intervals for types with more than 16 bits and
+- reads from invalid encodings (i.e., values which indicate more bytes after the maximum number of bytes for a type).
