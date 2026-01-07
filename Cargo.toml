@@ -1,0 +1,11 @@
+[package]
+name = "leb128rs"
+version = "1.0.0"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+description = "An implementation of LEB128 for integral types of bit-widths 16, 32, 64 and 128 as well as size types."
+keywords = ["LEB128", "serialization", "binary"]
+categories = ["compression", "encoding"]
+readme = "README.md"
+
+[dependencies]
