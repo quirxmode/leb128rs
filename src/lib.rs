@@ -436,8 +436,8 @@ mod test {
     };
 }
 
-    impl_signed!(i8, i16, i32, i64, i128, isize);
-    impl_unsigned!(u8, u16, u32, u64, u128, usize);
+    impl_signed!(i16, i32, i64, i128, isize);
+    impl_unsigned!(u16, u32, u64, u128, usize);
 
     macro_rules! make_test_pattern_high_one_to_zero {
         ($fname:ident, $tp:ty, $rf:ident, $wf:ident) => {

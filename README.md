@@ -22,7 +22,7 @@ The deserialization functions
 If there is demand for a pedantic (and thus, slower) deserialization variant, let me know.
 
 ## Tests
-Commonly agreed-upon conversions have been inspired from
+Commonly agreed-upon conversions can be found in
 - https://en.wikipedia.org/wiki/LEB128, namely
   - `624485`: `0xE5 0x8E 0x26`
   - `-123456`: `0xC0 0xBB 0x78`
